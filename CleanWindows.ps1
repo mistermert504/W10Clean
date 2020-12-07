@@ -1,5 +1,6 @@
 ﻿#Removes Windows Apps for all Users
 function DeBloadWindows(){
+    Write-Output "Debload Windows 10 Apps..."
     Get-AppxPackage -PackageTypeFilter Main, Bundle, Resource | Where-Object {$_.PackageFullName -like "*3DBuilder*"}  | Remove-AppxPackage -Allusers
     Get-AppxPackage -PackageTypeFilter Main, Bundle, Resource | Where-Object {$_.PackageFullName -like "*AppConnector*"}  | Remove-AppxPackage -Allusers
     Get-AppxPackage -PackageTypeFilter Main, Bundle, Resource | Where-Object {$_.PackageFullName -like "*BingFinance*"}  | Remove-AppxPackage -Allusers
@@ -81,6 +82,8 @@ function DeBloadWindows(){
     Get-AppxPackage -PackageTypeFilter Main, Bundle, Resource | Where-Object {$_.PackageFullName -like "*Asphalt8Airborne*"}  | Remove-AppxPackage -Allusers
     Get-AppxPackage -PackageTypeFilter Main, Bundle, Resource | Where-Object {$_.PackageFullName -like "*KeeperSecurityInc.Keeper*"}  | Remove-AppxPackage -Allusers
     Get-AppxPackage -PackageTypeFilter Main, Bundle, Resource | Where-Object {$_.PackageFullName -like "*king.com*"}  | Remove-AppxPackage -Allusers
+    Get-AppxPackage -PackageTypeFilter Main, Bundle, Resource | Where-Object {$_.PackageFullName -like "*Spotify*"}  | Remove-AppxPackage -Allusers
+    Get-AppxPackage -PackageTypeFilter Main, Bundle, Resource | Where-Object {$_.PackageFullName -like "*Xing*"}  | Remove-AppxPackage -Allusers
 }
 
 #File Remover if File in Parameter exist
@@ -89,13 +92,6 @@ function Remove-StartmenueTrash ($FilePath) {
         Write-Output "Removing .lnk File: " + $FilePath + "..."
         Remove-Item -Path $FilePath
     }
-}
-
-#Function works only with the default user created by installaion.
-function SetStartmenueLayout() {
-    Write-Output "Setting Start Layout..."
-    Push-Location $(Split-Path $Script:MyInvocation.MyCommand.Path)
-    Import-StartLayout -LayoutPath LayoutModification.xml -MountPath "C:\"
 }
 
 # Set Dark Mode for Applications
@@ -182,6 +178,30 @@ Function Restart {
 	Restart-Computer
 }
 
+#Reset StartLayout
+function ResetStartLayout
+{
+    Param(
+        [switch]$RemoveAllTiles
+    )
+$EmptyLayout=@"
+<LayoutModificationTemplate xmlns:defaultlayout="http://schemas.microsoft.com/Start/2014/FullDefaultLayout" xmlns:start="http://schemas.microsoft.com/Start/2014/StartLayout" Version="1" xmlns="http://schemas.microsoft.com/Start/2014/LayoutModification">
+  <LayoutOptions StartTileGroupCellWidth="6" />
+  <DefaultLayoutOverride>
+    <StartLayoutCollection>
+      <defaultlayout:StartLayout GroupCellWidth="6" />
+    </StartLayoutCollection>
+  </DefaultLayoutOverride>
+</LayoutModificationTemplate>
+"@
+    if ($RemoveAllTiles)
+    {
+        Set-Content -Path "$env:USERPROFILE\AppData\Local\Microsoft\Windows\Shell\LayoutModification.xml" -Value $EmptyLayout -Force
+    }
+    Remove-Item -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\CloudStore\Store\Cache\DefaultAccount\*windows.data*tile*' -Recurse -Force
+    Stop-Process -Name Explorer
+}
+
 #Call Functions
 #Use "#" in front of the function name to disable it
 
@@ -191,7 +211,6 @@ Remove-StartmenueTrash("C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Fuj
 Remove-StartmenueTrash("C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Fujitsu AuthConductor Client Basic.url")
 Remove-StartmenueTrash("C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Microsoft Edge.lnk")
 Remove-StartmenueTrash("C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Windows 10-Update-Assistent.lnk")
-SetStartmenueLayout
 DeBloadWindows
 SetSystemDarkMode
 SetAppsDarkMode
@@ -202,5 +221,6 @@ ShowSmallTaskbarIcons
 ShowTrayIcons
 DisableShortcutInName
 SetExplorerThisPC
+ResetStartLayout
 WaitForKey
 Restart
