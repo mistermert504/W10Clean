@@ -1,4 +1,11 @@
-﻿#Removes Windows Apps for all Users
+﻿Function RequireAdmin {
+	If (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]"Administrator")) {
+		Start-Process powershell.exe "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`" $PSCommandArgs" -Verb RunAs
+		Exit
+	}
+}
+
+#Removes Windows Apps for all Users
 function DeBloadWindows(){
     Write-Output "Debload Windows 10 Apps..."
     Get-AppxPackage -PackageTypeFilter Main, Bundle, Resource | Where-Object {$_.PackageFullName -like "*3DBuilder*"}  | Remove-AppxPackage -Allusers
@@ -204,6 +211,7 @@ $EmptyLayout=@"
 
 #Call Functions
 #Use "#" in front of the function name to disable it
+RequireAdmin
 
 Remove-StartmenueTrash("C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Amazon.lnk")
 Remove-StartmenueTrash("C:\ProgramData\Microsoft\Windows\Start Menu\Programs\DeskUpdate.lnk")
